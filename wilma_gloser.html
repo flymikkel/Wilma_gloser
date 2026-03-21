@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gloseøver for 7. trinn</title>
+    
+    <!-- Importerer React og Tailwind CSS for at appen skal fungere frittstående -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden">
+    
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- IKONER ---
+        const BookOpen = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>;
+        const Edit3 = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>;
+        const Repeat = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>;
+        const CheckCircle2 = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>;
+        const XCircle = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>;
+        const ArrowRight = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>;
+        const ArrowLeft = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>;
+        const Home = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>;
+        const RotateCcw = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>;
+
+        // --- DATA ---
+        const gloser = [
+          { no: "helt/ absolutt", en: "absolutely" },
+          { no: "ved et uhell", en: "accidentally" },
+          { no: "reklame", en: "advertisement" },
+          { no: "aldersgrense", en: "age limit" },
+          { no: "tydeligvis", en: "apparently" },
+          { no: "bue", en: "arch" },
+          { no: "kunstner", en: "artist" },
+          { no: "i tillegg til", en: "as well as" },
+          { no: "myndigheter", en: "authorities" },
+          { no: "tro", en: "beliefs" },
+          { no: "intelligent, begavet", en: "bright" },
+          { no: "forresten", en: "by the way" },
+          { no: "rolig", en: "calm" },
+          { no: "helt sikkert", en: "certainly" },
+          { no: "helt", en: "completely" },
+          { no: "bli sett på som/ansett", en: "considered" },
+          { no: "korallrev", en: "coral reef" },
+          { no: "kunstverk", en: "creations" },
+          { no: "etterkommere", en: "descendants" },
+          { no: "sykdom", en: "disease" },
+          { no: "sovesal", en: "dormitory" },
+          { no: "drømmer om (å) bli", en: "dreams of becoming" },
+          { no: "under, underveis, i løpet av", en: "during" },
+          { no: "økosystem", en: "ecosystem" },
+          { no: "utviklet seg", en: "evolved" },
+          { no: "trene", en: "exercise" },
+          { no: "gjerde", en: "fence" },
+          { no: "etasje/ gulv", en: "floor" },
+          { no: "tvunget", en: "forced" },
+          { no: "gester", en: "gestures" },
+          { no: "gått sine egne veier", en: "gone their own way" },
+          { no: "regjering", en: "government" },
+          { no: "hilsen", en: "greeting" },
+          { no: "havn", en: "harbour" },
+          { no: "helse", en: "health" },
+          { no: "nøle", en: "hesitate" },
+          { no: "Jeg håper...", en: "I hope..." },
+          { no: "Jeg ser frem til..", en: "I'm looking forward to..." },
+          { no: "ulovlig", en: "illegal" },
+          { no: "utålmodig", en: "impatient" },
+          { no: "utrolig", en: "incredibly" },
+          { no: "urfolkgrupper", en: "indigenous groups" },
+          { no: "i stedet for", en: "instead" },
+          { no: "fornærmelse", en: "insult" },
+          { no: "maneter", en: "jellyfish" },
+          { no: "ivrig", en: "keen" },
+          { no: "levende bevis", en: "living proof" },
+          { no: "for det meste", en: "mainly" },
+          { no: "typisk (australsk) natur", en: "native vegetation" },
+          { no: "ikke rart", en: "no wonder" },
+          { no: "anledninger", en: "occasions" },
+          { no: "hverandre", en: "one another" },
+          { no: "overfor", en: "opposite" },
+          { no: "vanlig", en: "ordinary" },
+          { no: "opprinnelig", en: "originally" },
+          { no: "smerte", en: "pain" },
+          { no: "fortau", en: "pavement" },
+          { no: "merkelig", en: "peculiar" },
+          { no: "bane", en: "pitch/field" },
+          { no: "spillere", en: "players" },
+          { no: "forurensing", en: "pollution" },
+          { no: "rovdyr", en: "predators" },
+          { no: "forhindre", en: "prevent" },
+          { no: "offentlig, folk", en: "public" },
+          { no: "slutte med", en: "quit" },
+          { no: "sjelden", en: "rarely" },
+          { no: "vanlig (regelmessig)", en: "regular" },
+          { no: "resultat", en: "result" },
+          { no: "gå av med pensjon", en: "retire" },
+          { no: "tau", en: "ropes" },
+          { no: "frekk", en: "rude" },
+          { no: "hellig", en: "sacred" },
+          { no: "skrike", en: "scream" },
+          { no: "slått seg ned", en: "settled" },
+          { no: "stillhet", en: "silence" },
+          { no: "spre seg", en: "spread" },
+          { no: "stirre på", en: "stare at" },
+          { no: "overflate", en: "surface" },
+          { no: "overleve", en: "survive" },
+          { no: "Saken er den at....", en: "The thing is ..." },
+          { no: "trussel", en: "threat" },
+          { no: "å unngå", en: "to avoid" },
+          { no: "å forsvinne", en: "to disappear" },
+          { no: "varselskilt", en: "warning sign" },
+          { no: "hva som helst", en: "whatever" },
+          { no: "når som helst", en: "whenever" },
+          { no: "hvor som helst", en: "wherever" },
+          { no: "dyreliv", en: "wild life" },
+          { no: "kunstverk", en: "works of art" }
+        ];
+
+        const verb = [
+          { no: "å fange / gripe", v1: "catch", v2: "caught", v3: "caught" },
+          { no: "å velge", v1: "choose", v2: "chose", v3: "chosen" },
+          { no: "å komme", v1: "come", v2: "came", v3: "come" },
+          { no: "å gjøre", v1: "do", v2: "did", v3: "done" },
+          { no: "å tegne", v1: "draw", v2: "drew", v3: "drawn" },
+          { no: "å drømme", v1: "dream", v2: "dreamt", v3: "dreamt", alt2: "dreamed", alt3: "dreamed" },
+          { no: "å kjempe/slåss", v1: "fight", v2: "fought", v3: "fought" },
+          { no: "å finne", v1: "find", v2: "found", v3: "found" },
+          { no: "å fly", v1: "fly", v2: "flew", v3: "flown" },
+          { no: "å gi", v1: "give", v2: "gave", v3: "given" },
+          { no: "å gå/ reise", v1: "go", v2: "went", v3: "gone" },
+          { no: "å vokse/ dyrke", v1: "grow", v2: "grew", v3: "grown" },
+          { no: "å gjemme (seg)", v1: "hide", v2: "hid", v3: "hidden" },
+          { no: "å slå, treffe", v1: "hit", v2: "hit", v3: "hit" },
+          { no: "å holde", v1: "hold", v2: "held", v3: "held" },
+          { no: "å tape, miste", v1: "lose", v2: "lost", v3: "lost" },
+          { no: "å lage, gjøre", v1: "make", v2: "made", v3: "made" },
+          { no: "å mene, bety", v1: "mean", v2: "meant", v3: "meant" },
+          { no: "å betale", v1: "pay", v2: "paid", v3: "paid" },
+          { no: "å legge, sette", v1: "put", v2: "put", v3: "put" },
+          { no: "å lese", v1: "read", v2: "read", v3: "read" },
+          { no: "å ri, kjøre", v1: "ride", v2: "rode", v3: "ridden" },
+          { no: "å ringe", v1: "ring", v2: "rang", v3: "rung" },
+          { no: "å reise seg, stå opp", v1: "rise", v2: "rose", v3: "risen" },
+          { no: "å løpe", v1: "run", v2: "ran", v3: "run" },
+          { no: "å si", v1: "say", v2: "said", v3: "said" },
+          { no: "å se", v1: "see", v2: "saw", v3: "seen" },
+          { no: "å selge", v1: "sell", v2: "sold", v3: "sold" },
+          { no: "å sende", v1: "send", v2: "sent", v3: "sent" },
+          { no: "å sette", v1: "set", v2: "set", v3: "set" },
+          { no: "å riste", v1: "shake", v2: "shook", v3: "shaken" },
+          { no: "å skyte", v1: "shoot", v2: "shot", v3: "shot" },
+          { no: "å vise", v1: "show", v2: "showed", v3: "shown" },
+          { no: "å lukke, stenge", v1: "shut", v2: "shut", v3: "shut" },
+          { no: "å synge", v1: "sing", v2: "sang", v3: "sung" },
+          { no: "å sitte", v1: "sit", v2: "sat", v3: "sat" },
+          { no: "å sove", v1: "sleep", v2: "slept", v3: "slept" },
+          { no: "å lukte", v1: "smell", v2: "smelt", v3: "smelt", alt2: "smelled", alt3: "smelled" },
+          { no: "å snakke", v1: "speak", v2: "spoke", v3: "spoken" },
+          { no: "å stave", v1: "spell", v2: "spelt", v3: "spelt", alt2: "spelled", alt3: "spelled" },
+          { no: "å tilbringe", v1: "spend", v2: "spent", v3: "spent" },
+          { no: "å spytte", v1: "spit", v2: "spat", v3: "spat" }
+        ];
+
+        // --- HJELPEFUNKSJONER ---
+        const shuffleArray = (array) => {
+          const newArr = [...array];
+          for (let i = newArr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+          }
+          return newArr;
+        };
+
+        const checkAnswer = (input, correct, altCorrect = null) => {
+          const clean = (str) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
+          const isMainCorrect = clean(input) === clean(correct);
+          const isAltCorrect = altCorrect ? clean(input) === clean(altCorrect) : false;
+          return isMainCorrect || isAltCorrect;
+        };
+
+
+        // --- KOMPONENTER ---
+
+        const MainMenu = ({ setView }) => (
+          <div className="flex flex-col items-center justify-center space-y-6 animate-fade-in text-center p-4">
+            <div className="mb-8">
+              <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-4">
+                Engelskøving 7. trinn
+              </h1>
+              <p className="text-gray-600 text-lg max-w-md mx-auto">
+                Velg hva du vil øve på. Du kan bla gjennom kortene for å lære, eller teste deg selv med å skrive svarene!
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
+              <button onClick={() => setView('flashcards-gloser')} className="group flex flex-col items-center justify-center bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl border-2 border-transparent hover:border-blue-500 transition-all duration-300">
+                <BookOpen className="w-12 h-12 text-blue-500 mb-4 group-hover:scale-110 transition-transform" />
+                <h2 className="text-xl font-bold text-gray-800">Øv på Gloser</h2>
+                <p className="text-sm text-gray-500 mt-2">Bla gjennom kort for å lære ordene</p>
+              </button>
+
+              <button onClick={() => setView('quiz-gloser')} className="group flex flex-col items-center justify-center bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl border-2 border-transparent hover:border-indigo-500 transition-all duration-300">
+                <Edit3 className="w-12 h-12 text-indigo-500 mb-4 group-hover:scale-110 transition-transform" />
+                <h2 className="text-xl font-bold text-gray-800">Gloseprøve</h2>
+                <p className="text-sm text-gray-500 mt-2">Skriv inn riktig engelsk oversettelse</p>
+              </button>
+
+              <button onClick={() => setView('flashcards-verb')} className="group flex flex-col items-center justify-center bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl border-2 border-transparent hover:border-green-500 transition-all duration-300">
+                <Repeat className="w-12 h-12 text-green-500 mb-4 group-hover:scale-110 transition-transform" />
+                <h2 className="text-xl font-bold text-gray-800">Øv på Sterke Verb</h2>
+                <p className="text-sm text-gray-500 mt-2">Se hvordan verbene bøyes</p>
+              </button>
+
+              <button onClick={() => setView('quiz-verb')} className="group flex flex-col items-center justify-center bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl border-2 border-transparent hover:border-purple-500 transition-all duration-300">
+                <Edit3 className="w-12 h-12 text-purple-500 mb-4 group-hover:scale-110 transition-transform" />
+                <h2 className="text-xl font-bold text-gray-800">Verbprøve</h2>
+                <p className="text-sm text-gray-500 mt-2">Fyll inn preteritum og perfektum</p>
+              </button>
+            </div>
+          </div>
+        );
+
+        const Flashcards = ({ type, data, goHome }) => {
+          const [list, setList] = useState([]);
+          const [currentIndex, setCurrentIndex] = useState(0);
+          const [isFlipped, setIsFlipped] = useState(false);
+
+          useEffect(() => {
+            setList(shuffleArray(data));
+          }, [data]);
+
+          if (list.length === 0) return null;
+
+          const currentItem = list[currentIndex];
+
+          const nextCard = () => {
+            setIsFlipped(false);
+            setTimeout(() => {
+              setCurrentIndex((prev) => (prev + 1) % list.length);
+            }, 150);
+          };
+
+          const prevCard = () => {
+            setIsFlipped(false);
+            setTimeout(() => {
+              setCurrentIndex((prev) => (prev - 1 + list.length) % list.length);
+            }, 150);
+          };
+
+          return (
+            <div className="flex flex-col items-center w-full max-w-xl mx-auto animate-fade-in px-4">
+              <div className="flex justify-between w-full items-center mb-6">
+                <button onClick={goHome} className="p-2 text-gray-500 hover:text-gray-800 bg-white rounded-full shadow-sm hover:shadow transition-all">
+                  <Home className="w-6 h-6" />
+                </button>
+                <span className="text-sm font-semibold text-gray-500 bg-white px-4 py-1 rounded-full shadow-sm">
+                  Kort {currentIndex + 1} av {list.length}
+                </span>
+              </div>
+
+              <div 
+                className="w-full aspect-[4/3] perspective-1000 cursor-pointer"
+                onClick={() => setIsFlipped(!isFlipped)}
+              >
+                <div className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
+                  
+                  <div className="absolute w-full h-full bg-white rounded-3xl shadow-lg border border-gray-100 flex flex-col items-center justify-center backface-hidden p-8 text-center">
+                    <p className="text-sm text-blue-500 font-bold uppercase tracking-wider mb-4">Norsk</p>
+                    <h2 className="text-3xl md:text-4xl font-bold text-gray-800">{currentItem.no}</h2>
+                    <p className="text-gray-400 mt-8 text-sm">Trykk på kortet for å snu</p>
+                  </div>
+
+                  <div className="absolute w-full h-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-3xl shadow-lg flex flex-col items-center justify-center backface-hidden rotate-y-180 p-8 text-center">
+                    <p className="text-sm text-blue-100 font-bold uppercase tracking-wider mb-4">Engelsk</p>
+                    
+                    {type === 'gloser' ? (
+                      <h2 className="text-3xl md:text-4xl font-bold">{currentItem.en}</h2>
+                    ) : (
+                      <div className="flex flex-col gap-4">
+                        <div className="text-xl"><span className="opacity-75 text-sm uppercase block">Infinitiv</span> to {currentItem.v1}</div>
+                        <div className="text-xl"><span className="opacity-75 text-sm uppercase block">Preteritum</span> {currentItem.v2}</div>
+                        <div className="text-xl"><span className="opacity-75 text-sm uppercase block">Perfektum</span> {currentItem.v3}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-between w-full mt-8 gap-4">
+                <button onClick={prevCard} className="flex-1 flex justify-center items-center py-4 bg-white hover:bg-gray-50 text-gray-700 rounded-xl shadow-sm hover:shadow transition-all font-semibold">
+                  <ArrowLeft className="w-5 h-5 mr-2" /> Forrige
+                </button>
+                <button onClick={nextCard} className="flex-1 flex justify-center items-center py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm hover:shadow-lg transition-all font-semibold">
+                  Neste <ArrowRight className="w-5 h-5 ml-2" />
+                </button>
+              </div>
+            </div>
+          );
+        };
+
+        const QuizGloser = ({ data, goHome }) => {
+          const [list, setList] = useState([]);
+          const [currentIndex, setCurrentIndex] = useState(0);
+          const [input, setInput] = useState("");
+          const [feedback, setFeedback] = useState(null);
+          const [score, setScore] = useState({ correct: 0, wrong: 0 });
+
+          useEffect(() => {
+            setList(shuffleArray(data));
+          }, [data]);
+
+          if (list.length === 0) return null;
+          const currentItem = list[currentIndex];
+          const isFinished = currentIndex >= list.length;
+
+          const handleSubmit = (e) => {
+            e.preventDefault();
+            if (feedback !== null) return; 
+
+            const isCorrect = checkAnswer(input, currentItem.en);
+            setFeedback(isCorrect ? 'correct' : 'incorrect');
+            
+            if (isCorrect) {
+              setScore(s => ({ ...s, correct: s.correct + 1 }));
+              setTimeout(nextQuestion, 1000);
+            } else {
+              setScore(s => ({ ...s, wrong: s.wrong + 1 }));
+            }
+          };
+
+          const nextQuestion = () => {
+            setFeedback(null);
+            setInput("");
+            setCurrentIndex(prev => prev + 1);
+          };
+
+          if (isFinished) {
+            return <ResultScreen score={score} total={list.length} goHome={goHome} restart={() => {setList(shuffleArray(data)); setCurrentIndex(0); setScore({correct:0,wrong:0});}} />;
+          }
+
+          return (
+            <div className="flex flex-col items-center w-full max-w-md mx-auto animate-fade-in px-4">
+              <div className="flex justify-between w-full items-center mb-6">
+                <button onClick={goHome} className="p-2 text-gray-500 hover:text-gray-800 bg-white rounded-full shadow-sm hover:shadow transition-all">
+                  <Home className="w-6 h-6" />
+                </button>
+                <div className="flex items-center gap-4 text-sm font-semibold">
+                  <span className="text-green-600 bg-green-50 px-3 py-1 rounded-full">{score.correct} Riktig</span>
+                  <span className="text-gray-500 bg-white px-3 py-1 rounded-full shadow-sm">{currentIndex + 1} / {list.length}</span>
+                </div>
+              </div>
+
+              <div className="w-full bg-white p-8 rounded-3xl shadow-lg border border-gray-100 text-center mb-6">
+                <p className="text-sm text-gray-400 font-bold uppercase tracking-wider mb-2">Hva heter dette på engelsk?</p>
+                <h2 className="text-3xl font-bold text-gray-800 mb-8">{currentItem.no}</h2>
+
+                <form onSubmit={handleSubmit} className="relative">
+                  <input
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    disabled={feedback === 'correct'}
+                    autoFocus
+                    autoComplete="off"
+                    className={`w-full text-center text-xl p-4 rounded-xl border-2 focus:outline-none transition-colors ${
+                      feedback === 'correct' ? 'border-green-500 bg-green-50 text-green-700' :
+                      feedback === 'incorrect' ? 'border-red-500 bg-red-50 text-red-700' :
+                      'border-gray-200 focus:border-indigo-500'
+                    }`}
+                    placeholder="Skriv her..."
+                  />
+                  
+                  {feedback === 'correct' && <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 text-green-500 w-6 h-6" />}
+                  {feedback === 'incorrect' && <XCircle className="absolute right-4 top-1/2 -translate-y-1/2 text-red-500 w-6 h-6" />}
+                </form>
+
+                {feedback === 'incorrect' && (
+                  <div className="mt-6 animate-fade-in">
+                    <p className="text-red-600 font-medium mb-1">Ops! Riktig svar er:</p>
+                    <p className="text-2xl font-bold text-gray-800 bg-gray-100 py-2 rounded-lg">{currentItem.en}</p>
+                    <button onClick={nextQuestion} className="mt-4 w-full py-3 bg-gray-800 text-white rounded-xl font-semibold hover:bg-gray-900 transition-colors">
+                      Gå videre
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        };
+
+        const QuizVerb = ({ data, goHome }) => {
+          const [list, setList] = useState([]);
+          const [currentIndex, setCurrentIndex] = useState(0);
+          const [inputs, setInputs] = useState({ v2: "", v3: "" });
+          const [feedback, setFeedback] = useState(null);
+          const [score, setScore] = useState({ correct: 0, wrong: 0 });
+
+          useEffect(() => {
+            setList(shuffleArray(data));
+          }, [data]);
+
+          if (list.length === 0) return null;
+          const currentItem = list[currentIndex];
+          const isFinished = currentIndex >= list.length;
+
+          const handleSubmit = (e) => {
+            e.preventDefault();
+            if (feedback !== null) return;
+
+            const v2Correct = checkAnswer(inputs.v2, currentItem.v2, currentItem.alt2);
+            const v3Correct = checkAnswer(inputs.v3, currentItem.v3, currentItem.alt3);
+
+            if (v2Correct && v3Correct) {
+              setFeedback('correct');
+              setScore(s => ({ ...s, correct: s.correct + 1 }));
+              setTimeout(nextQuestion, 1200);
+            } else {
+              setFeedback('incorrect');
+              setScore(s => ({ ...s, wrong: s.wrong + 1 }));
+            }
+          };
+
+          const nextQuestion = () => {
+            setFeedback(null);
+            setInputs({ v2: "", v3: "" });
+            setCurrentIndex(prev => prev + 1);
+          };
+
+          if (isFinished) {
+            return <ResultScreen score={score} total={list.length} goHome={goHome} restart={() => {setList(shuffleArray(data)); setCurrentIndex(0); setScore({correct:0,wrong:0});}} />;
+          }
+
+          return (
+            <div className="flex flex-col items-center w-full max-w-md mx-auto animate-fade-in px-4">
+              <div className="flex justify-between w-full items-center mb-6">
+                <button onClick={goHome} className="p-2 text-gray-500 hover:text-gray-800 bg-white rounded-full shadow-sm hover:shadow transition-all">
+                  <Home className="w-6 h-6" />
+                </button>
+                <div className="flex items-center gap-4 text-sm font-semibold">
+                  <span className="text-green-600 bg-green-50 px-3 py-1 rounded-full">{score.correct} Riktig</span>
+                  <span className="text-gray-500 bg-white px-3 py-1 rounded-full shadow-sm">{currentIndex + 1} / {list.length}</span>
+                </div>
+              </div>
+
+              <div className="w-full bg-white p-6 md:p-8 rounded-3xl shadow-lg border border-gray-100 text-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-800 mb-1">{currentItem.no}</h2>
+                <p className="text-lg text-indigo-600 font-semibold mb-6">Infinitiv: to {currentItem.v1}</p>
+
+                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                  <div className="text-left">
+                    <label className="text-xs font-bold text-gray-400 uppercase ml-2">Preteritum (fortid)</label>
+                    <input
+                      type="text"
+                      value={inputs.v2}
+                      onChange={(e) => setInputs({...inputs, v2: e.target.value})}
+                      disabled={feedback === 'correct'}
+                      autoFocus
+                      autoComplete="off"
+                      className={`w-full text-center text-lg p-3 rounded-xl border-2 focus:outline-none transition-colors ${
+                        feedback === 'incorrect' && !checkAnswer(inputs.v2, currentItem.v2, currentItem.alt2) ? 'border-red-500 bg-red-50 text-red-700' :
+                        feedback === 'correct' ? 'border-green-500 bg-green-50 text-green-700' :
+                        'border-gray-200 focus:border-purple-500'
+                      }`}
+                    />
+                  </div>
+
+                  <div className="text-left mb-2">
+                    <label className="text-xs font-bold text-gray-400 uppercase ml-2">Perfektum (har gjort)</label>
+                    <input
+                      type="text"
+                      value={inputs.v3}
+                      onChange={(e) => setInputs({...inputs, v3: e.target.value})}
+                      disabled={feedback === 'correct'}
+                      autoComplete="off"
+                      className={`w-full text-center text-lg p-3 rounded-xl border-2 focus:outline-none transition-colors ${
+                        feedback === 'incorrect' && !checkAnswer(inputs.v3, currentItem.v3, currentItem.alt3) ? 'border-red-500 bg-red-50 text-red-700' :
+                        feedback === 'correct' ? 'border-green-500 bg-green-50 text-green-700' :
+                        'border-gray-200 focus:border-purple-500'
+                      }`}
+                    />
+                  </div>
+
+                  {!feedback && (
+                     <button type="submit" className="mt-2 w-full py-3 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition-colors shadow-md">
+                       Sjekk svar
+                     </button>
+                  )}
+                </form>
+
+                {feedback === 'incorrect' && (
+                  <div className="mt-6 animate-fade-in bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    <p className="text-red-600 font-medium mb-2">Ikke helt riktig. Fasiten er:</p>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="text-right text-gray-500">Preteritum:</div>
+                      <div className="font-bold text-gray-800 text-left">{currentItem.v2}</div>
+                      <div className="text-right text-gray-500">Perfektum:</div>
+                      <div className="font-bold text-gray-800 text-left">{currentItem.v3}</div>
+                    </div>
+                    <button onClick={nextQuestion} className="mt-4 w-full py-3 bg-gray-800 text-white rounded-xl font-semibold hover:bg-gray-900 transition-colors">
+                      Gå videre
+                    </button>
+                  </div>
+                )}
+                
+                {feedback === 'correct' && (
+                   <div className="mt-4 text-green-600 font-bold text-lg animate-fade-in flex justify-center items-center">
+                     <CheckCircle2 className="w-6 h-6 mr-2" /> Helt Riktig!
+                   </div>
+                )}
+              </div>
+            </div>
+          );
+        };
+
+        const ResultScreen = ({ score, total, goHome, restart }) => {
+          const percentage = Math.round((score.correct / total) * 100);
+          let message = "Godt jobba!";
+          if (percentage === 100) message = "Feilfri! Helt fantastisk! 🎉";
+          else if (percentage > 80) message = "Kjempebra jobba! 🌟";
+          else if (percentage > 50) message = "Bra innsats! Litt mer øving så sitter de. 💪";
+
+          return (
+            <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto animate-fade-in p-6 bg-white rounded-3xl shadow-xl border border-gray-100 text-center mt-10">
+              <h2 className="text-3xl font-extrabold text-gray-800 mb-2">Ferdig!</h2>
+              <p className="text-lg text-gray-500 mb-8">{message}</p>
+              
+              <div className="relative w-32 h-32 flex items-center justify-center rounded-full bg-indigo-50 border-8 border-indigo-100 mb-8">
+                <div className="text-4xl font-black text-indigo-600">{percentage}%</div>
+              </div>
+
+              <div className="w-full grid grid-cols-2 gap-4 mb-8">
+                <div className="bg-green-50 p-4 rounded-2xl">
+                  <div className="text-sm text-green-600 font-bold uppercase">Riktig</div>
+                  <div className="text-2xl font-black text-green-700">{score.correct}</div>
+                </div>
+                <div className="bg-red-50 p-4 rounded-2xl">
+                  <div className="text-sm text-red-600 font-bold uppercase">Feil</div>
+                  <div className="text-2xl font-black text-red-700">{score.wrong}</div>
+                </div>
+              </div>
+
+              <div className="flex w-full gap-4">
+                <button onClick={goHome} className="flex-1 flex justify-center items-center py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition">
+                  <Home className="w-5 h-5 mr-2" /> Hjem
+                </button>
+                <button onClick={restart} className="flex-[2] flex justify-center items-center py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition shadow-md">
+                  <RotateCcw className="w-5 h-5 mr-2" /> Prøv igjen
+                </button>
+              </div>
+            </div>
+          );
+        };
+
+        const App = () => {
+          const [view, setView] = useState('home');
+
+          return (
+            <>
+              <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-br from-blue-100 to-purple-100 -z-10 rounded-b-[4rem] opacity-50 pointer-events-none"></div>
+
+              <main className="container mx-auto px-4 py-8 md:py-16 min-h-[80vh] flex flex-col items-center justify-center relative z-10">
+                {view === 'home' && <MainMenu setView={setView} />}
+                {view === 'flashcards-gloser' && <Flashcards type="gloser" data={gloser} goHome={() => setView('home')} />}
+                {view === 'flashcards-verb' && <Flashcards type="verb" data={verb} goHome={() => setView('home')} />}
+                {view === 'quiz-gloser' && <QuizGloser data={gloser} goHome={() => setView('home')} />}
+                {view === 'quiz-verb' && <QuizVerb data={verb} goHome={() => setView('home')} />}
+              </main>
+            </>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
