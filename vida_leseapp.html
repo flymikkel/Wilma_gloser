@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OrdLek - Høyfrekvente Ord</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+        body { 
+            font-family: 'Nunito', sans-serif; 
+            background-color: #F3F4F6; 
+            touch-action: manipulation; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        .card-3d { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card-3d:active { transform: scale(0.95); }
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(15px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="antialiased text-gray-800 selection:bg-purple-200">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- DATABASE ---
+        const wordDatabase = [
+            { id: 1, word: "og", block: 1, type: "hjerteord", heartPart: "og", contextSentence: "Mamma ___ pappa." },
+            { id: 2, word: "i", block: 1, type: "lydrett", heartPart: "", contextSentence: "Fisken svømmer ___ vannet." },
+            { id: 3, word: "det", block: 1, type: "hjerteord", heartPart: "t", contextSentence: "Se på ___ store huset." },
+            { id: 4, word: "på", block: 1, type: "lydrett", heartPart: "", contextSentence: "Katten sitter ___ taket." },
+            { id: 5, word: "som", block: 1, type: "lydrett", heartPart: "", contextSentence: "Han er sterk ___ en bjørn." },
+            { id: 6, word: "er", block: 1, type: "hjerteord", heartPart: "er", contextSentence: "Himmelen ___ blå." },
+            { id: 7, word: "en", block: 1, type: "lydrett", heartPart: "", contextSentence: "Jeg har ___ rød bil." },
+            { id: 8, word: "til", block: 1, type: "lydrett", heartPart: "", contextSentence: "Gi boken ___ meg." },
+            { id: 9, word: "å", block: 1, type: "lydrett", heartPart: "", contextSentence: "Jeg liker ___ leke." },
+            { id: 10, word: "han", block: 1, type: "lydrett", heartPart: "", contextSentence: "Der borte står ___." },
+            { id: 11, word: "av", block: 2, type: "lydrett", heartPart: "", contextSentence: "Bordet er laget ___ tre." },
+            { id: 12, word: "for", block: 2, type: "lydrett", heartPart: "", contextSentence: "Dette er en gave ___ deg." },
+            { id: 13, word: "med", block: 2, type: "lydrett", heartPart: "", contextSentence: "Vil du være ___ ut?" },
+            { id: 14, word: "at", block: 2, type: "lydrett", heartPart: "", contextSentence: "Jeg ser ___ du smiler." },
+            { id: 15, word: "var", block: 2, type: "lydrett", heartPart: "", contextSentence: "I går ___ det sol." },
+            { id: 16, word: "de", block: 2, type: "hjerteord", heartPart: "e", contextSentence: "Ser du hva ___ gjør?" },
+            { id: 17, word: "ikke", block: 2, type: "lydrett", heartPart: "", contextSentence: "Jeg kan ___ fly." },
+            { id: 18, word: "den", block: 2, type: "lydrett", heartPart: "", contextSentence: "Kan du kaste ___ ballen?" },
+            { id: 19, word: "har", block: 2, type: "lydrett", heartPart: "", contextSentence: "Jeg ___ en katt." },
+            { id: 20, word: "jeg", block: 2, type: "hjerteord", heartPart: "eg", contextSentence: "I dag er ___ glad." },
+            { id: 21, word: "om", block: 3, type: "lydrett", heartPart: "", contextSentence: "Boken handler ___ en hund." },
+            { id: 22, word: "et", block: 3, type: "hjerteord", heartPart: "t", contextSentence: "Vi så ___ stort tre." },
+            { id: 23, word: "men", block: 3, type: "lydrett", heartPart: "", contextSentence: "Jeg er liten, ___ sterk." },
+            { id: 24, word: "så", block: 3, type: "lydrett", heartPart: "", contextSentence: "Jeg ___ en fugl." },
+            { id: 25, word: "seg", block: 3, type: "hjerteord", heartPart: "eg", contextSentence: "Katten vasker ___." },
+            { id: 26, word: "hun", block: 3, type: "lydrett", heartPart: "", contextSentence: "Der borte går ___." },
+            { id: 27, word: "hadde", block: 3, type: "lydrett", heartPart: "", contextSentence: "Han ___ en rød lue." },
+            { id: 28, word: "fra", block: 3, type: "lydrett", heartPart: "", contextSentence: "Jeg kommer ___ skolen." },
+            { id: 29, word: "vi", block: 3, type: "lydrett", heartPart: "", contextSentence: "I morgen skal ___ bade." },
+            { id: 30, word: "du", block: 3, type: "lydrett", heartPart: "", contextSentence: "Hva gjør ___ nå?" },
+            { id: 31, word: "kan", block: 4, type: "lydrett", heartPart: "", contextSentence: "Jeg ___ hoppe høyt." },
+            { id: 32, word: "da", block: 4, type: "lydrett", heartPart: "", contextSentence: "Hva skjedde ___?" },
+            { id: 33, word: "ble", block: 4, type: "lydrett", heartPart: "", contextSentence: "Buksen ___ våt." },
+            { id: 34, word: "ut", block: 4, type: "lydrett", heartPart: "", contextSentence: "Vi må gå ___." },
+            { id: 35, word: "skal", block: 4, type: "lydrett", heartPart: "", contextSentence: "Vi ___ spise middag." },
+            { id: 36, word: "vil", block: 4, type: "lydrett", heartPart: "", contextSentence: "Jeg ___ ha et eple." },
+            { id: 37, word: "ham", block: 4, type: "lydrett", heartPart: "", contextSentence: "Jeg ga boken til ___." },
+            { id: 38, word: "etter", block: 4, type: "lydrett", heartPart: "", contextSentence: "Han kom inn ___ meg." },
+            { id: 39, word: "over", block: 4, type: "lydrett", heartPart: "", contextSentence: "Fuglen fløy ___ huset." },
+            { id: 40, word: "ved", block: 4, type: "lydrett", heartPart: "", contextSentence: "Båten ligger ___ brygga." },
+            { id: 41, word: "også", block: 5, type: "lydrett", heartPart: "", contextSentence: "Jeg vil ___ være med." },
+            { id: 42, word: "bare", block: 5, type: "lydrett", heartPart: "", contextSentence: "Vi har ___ en is igjen." },
+            { id: 43, word: "eller", block: 5, type: "lydrett", heartPart: "", contextSentence: "Vil du ha melk ___ vann?" },
+            { id: 44, word: "sa", block: 5, type: "lydrett", heartPart: "", contextSentence: "Hva var det du ___?" },
+            { id: 45, word: "nå", block: 5, type: "lydrett", heartPart: "", contextSentence: "Vi må gå ___." },
+            { id: 46, word: "dette", block: 5, type: "lydrett", heartPart: "", contextSentence: "Hva er ___ for noe?" },
+            { id: 47, word: "noe", block: 5, type: "lydrett", heartPart: "", contextSentence: "Jeg vil ha ___ å spise." },
+            { id: 48, word: "være", block: 5, type: "lydrett", heartPart: "", contextSentence: "Du må ___ snill." },
+            { id: 49, word: "meg", block: 5, type: "hjerteord", heartPart: "eg", contextSentence: "Kast ballen til ___." },
+            { id: 50, word: "mot", block: 5, type: "lydrett", heartPart: "", contextSentence: "Bilen kjørte ___ oss." },
+            { id: 51, word: "sin", block: 6, type: "lydrett", heartPart: "", contextSentence: "Han tok jakken ___." },
+            { id: 52, word: "ha", block: 6, type: "lydrett", heartPart: "", contextSentence: "Vil du ___ en klem?" },
+            { id: 53, word: "år", block: 6, type: "lydrett", heartPart: "", contextSentence: "Jeg er syv ___ gammel." },
+            { id: 54, word: "henne", block: 6, type: "lydrett", heartPart: "", contextSentence: "Jeg ga gaven til ___." },
+            { id: 55, word: "må", block: 6, type: "lydrett", heartPart: "", contextSentence: "Vi ___ sove nå." },
+            { id: 56, word: "selv", block: 6, type: "lydrett", heartPart: "", contextSentence: "Jeg kan gjøre det ___." },
+            { id: 57, word: "sier", block: 6, type: "lydrett", heartPart: "", contextSentence: "Læreren ___ at vi er flinke." },
+            { id: 58, word: "få", block: 6, type: "lydrett", heartPart: "", contextSentence: "Kan jeg ___ en is?" },
+            { id: 59, word: "kom", block: 6, type: "lydrett", heartPart: "", contextSentence: "Han ___ inn døra." },
+            { id: 60, word: "denne", block: 6, type: "lydrett", heartPart: "", contextSentence: "Hvem eier ___ boken?" },
+            { id: 61, word: "enn", block: 7, type: "lydrett", heartPart: "", contextSentence: "Han løper raskere ___ meg." },
+            { id: 62, word: "to", block: 7, type: "lydrett", heartPart: "", contextSentence: "Jeg har ___ hender." },
+            { id: 63, word: "hans", block: 7, type: "lydrett", heartPart: "", contextSentence: "Dette er huset ___." },
+            { id: 64, word: "bli", block: 7, type: "lydrett", heartPart: "", contextSentence: "Det vil ___ fint vær." },
+            { id: 65, word: "ville", block: 7, type: "lydrett", heartPart: "", contextSentence: "Hun ___ ikke sove." },
+            { id: 66, word: "før", block: 7, type: "lydrett", heartPart: "", contextSentence: "Vask hendene ___ du spiser." },
+            { id: 67, word: "vært", block: 7, type: "lydrett", heartPart: "", contextSentence: "Har du ___ her før?" },
+            { id: 68, word: "skulle", block: 7, type: "lydrett", heartPart: "", contextSentence: "Vi ___ egentlig gå." },
+            { id: 69, word: "går", block: 7, type: "lydrett", heartPart: "", contextSentence: "Klokken ___ fort." },
+            { id: 70, word: "her", block: 7, type: "lydrett", heartPart: "", contextSentence: "Kom hit og sett deg ___." },
+            { id: 71, word: "slik", block: 8, type: "lydrett", heartPart: "", contextSentence: "Gjør det på ___ måte." },
+            { id: 72, word: "gikk", block: 8, type: "lydrett", heartPart: "", contextSentence: "Tiden ___ veldig fort." },
+            { id: 73, word: "mer", block: 8, type: "lydrett", heartPart: "", contextSentence: "Jeg vil ha ___ kake." },
+            { id: 74, word: "hva", block: 8, type: "hjerteord", heartPart: "h", contextSentence: "___ heter du?" },
+            { id: 75, word: "igjen", block: 8, type: "lydrett", heartPart: "", contextSentence: "Prøv en gang ___." },
+            { id: 76, word: "fikk", block: 8, type: "lydrett", heartPart: "", contextSentence: "Han ___ en fin gave." },
+            { id: 77, word: "man", block: 8, type: "lydrett", heartPart: "", contextSentence: "Hvor kan ___ kjøpe is?" },
+            { id: 78, word: "alt", block: 8, type: "lydrett", heartPart: "", contextSentence: "Han spiste opp ___ sammen." },
+            { id: 79, word: "mange", block: 8, type: "lydrett", heartPart: "", contextSentence: "Det var ___ barn der." },
+            { id: 80, word: "ingen", block: 8, type: "lydrett", heartPart: "", contextSentence: "Det var ___ hjemme." },
+            { id: 81, word: "får", block: 9, type: "lydrett", heartPart: "", contextSentence: "I dag ___ vi besøk." },
+            { id: 82, word: "oss", block: 9, type: "lydrett", heartPart: "", contextSentence: "Bli med ___ hjem." },
+            { id: 83, word: "hvor", block: 9, type: "hjerteord", heartPart: "h", contextSentence: "___ har du vært?" },
+            { id: 84, word: "under", block: 9, type: "lydrett", heartPart: "", contextSentence: "Katten lå ___ bordet." },
+            { id: 85, word: "siden", block: 9, type: "lydrett", heartPart: "", contextSentence: "Det er lenge ___ sist." },
+            { id: 86, word: "hele", block: 9, type: "lydrett", heartPart: "", contextSentence: "Vi leste ___ boken." },
+            { id: 87, word: "dag", block: 9, type: "lydrett", heartPart: "", contextSentence: "Det er en fin ___." },
+            { id: 88, word: "gang", block: 9, type: "lydrett", heartPart: "", contextSentence: "Det var en ___ en konge." },
+            { id: 89, word: "sammen", block: 9, type: "lydrett", heartPart: "", contextSentence: "Vi leker ___ ute." },
+            { id: 90, word: "ned", block: 9, type: "lydrett", heartPart: "", contextSentence: "Solen gikk ___ i havet." },
+            { id: 91, word: "stor", block: 10, type: "lydrett", heartPart: "", contextSentence: "Elefanten er veldig ___." },
+            { id: 92, word: "god", block: 10, type: "lydrett", heartPart: "", contextSentence: "Maten smakte veldig ___." },
+            { id: 93, word: "se", block: 10, type: "lydrett", heartPart: "", contextSentence: "Vil du ___ en film?" },
+            { id: 94, word: "ny", block: 10, type: "lydrett", heartPart: "", contextSentence: "Jeg har en ___ sykkel." },
+            { id: 95, word: "opp", block: 10, type: "lydrett", heartPart: "", contextSentence: "Fuglen fløy høyt ___." },
+            { id: 96, word: "gjøre", block: 10, type: "lydrett", heartPart: "", contextSentence: "Hva skal vi ___ i dag?" },
+            { id: 97, word: "ta", block: 10, type: "lydrett", heartPart: "", contextSentence: "Du kan ___ et eple." },
+            { id: 98, word: "la", block: 10, type: "lydrett", heartPart: "", contextSentence: "Hun ___ boken på bordet." },
+            { id: 99, word: "tid", block: 10, type: "lydrett", heartPart: "", contextSentence: "Vi har god ___." },
+            { id: 100, word: "alltid", block: 10, type: "lydrett", heartPart: "", contextSentence: "Solen står ___ opp." }
+        ];
+
+        // --- ICONS ---
+        const PlayIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>;
+        const CheckIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>;
+        const ArrowRightIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>;
+        
+        // Forenklet, fargerik enhjørning-SVG
+        const UnicornIcon = ({ locked }) => (
+            <svg width="48" height="48" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Horn */}
+                <path d="M42 20 L48 4 L36 18 Z" fill={locked ? "#cbd5e1" : "#facc15"} />
+                {/* Hode og nakke */}
+                <path d="M36 18 C 36 18 20 20 16 30 C 12 40 14 50 14 50 L 24 50 C 24 50 26 42 30 40 C 34 38 44 42 44 42 C 44 42 48 30 36 18 Z" fill={locked ? "#94a3b8" : "#f472b6"} />
+                {/* Øye */}
+                {!locked && <circle cx="28" cy="28" r="2" fill="white" />}
+                {/* Lås-ikon (hvis låst) */}
+                {locked && (
+                    <g transform="translate(20, 24) scale(0.6)">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" fill="#475569" />
+                        <path d="M7 11V7a5 5 0 0110 0v4" stroke="#475569" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </g>
+                )}
+            </svg>
+        );
+
+        // --- COMPONENTS ---
+
+        // Helper: Highlight heart word parts
+        const renderWordWithHighlight = (wordObj) => {
+            if (wordObj.type === "lydrett" || !wordObj.heartPart) return wordObj.word;
+            const parts = wordObj.word.split(wordObj.heartPart);
+            if (parts.length === 2) {
+                return <>{parts[0]}<span className="text-red-500">{wordObj.heartPart}</span>{parts[1]}</>;
+            }
+            return wordObj.word;
+        };
+
+        const Dashboard = ({ currentBlock, onStart }) => {
+            const levels = Array.from({ length: 10 }, (_, i) => i + 1);
+
+            return (
+                <div className="min-h-screen flex flex-col items-center justify-between py-12 px-4 bg-gradient-to-b from-purple-50 to-pink-50 fade-in">
+                    <div className="text-center space-y-2 mb-8">
+                        <h1 className="text-4xl md:text-5xl font-black text-purple-600 drop-shadow-sm">Enhjørningsskogen</h1>
+                        <p className="text-lg text-purple-400 font-bold">Lås opp alle for å vinne!</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 w-full max-w-3xl mb-12">
+                        {levels.map(level => {
+                            const isUnlocked = level < currentBlock;
+                            const isCurrent = level === currentBlock;
+                            const isLocked = level > currentBlock;
+
+                            return (
+                                <div key={level} className={`flex flex-col items-center justify-center p-4 rounded-3xl border-4 transition-all duration-300 ${isCurrent ? 'border-purple-400 bg-white shadow-xl transform scale-105 pulse' : isUnlocked ? 'border-pink-300 bg-pink-50 shadow-sm' : 'border-gray-200 bg-gray-100 opacity-80'}`}>
+                                    <UnicornIcon locked={isLocked} />
+                                    <span className={`mt-3 font-black text-lg ${isCurrent ? 'text-purple-600' : isUnlocked ? 'text-pink-500' : 'text-gray-400'}`}>
+                                        Nivå {level}
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    <button 
+                        onClick={onStart}
+                        className="card-3d bg-gradient-to-b from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-[2rem] px-10 py-6 shadow-xl flex items-center justify-center space-x-4 border-b-4 border-purple-800 w-full max-w-md"
+                    >
+                        <PlayIcon />
+                        <span className="text-3xl font-black tracking-wide">
+                            {currentBlock > 10 ? "Start på nytt!" : `Spill Nivå ${currentBlock}`}
+                        </span>
+                    </button>
+                </div>
+            );
+        };
+
+        const LearningPhase = ({ blockWords, onFinish }) => {
+            const [index, setIndex] = useState(0);
+            const currentWord = blockWords[index];
+
+            const handleNext = () => {
+                if (index < blockWords.length - 1) setIndex(index + 1);
+                else onFinish();
+            };
+
+            return (
+                <div className="min-h-screen flex flex-col items-center justify-between py-12 px-6 fade-in bg-blue-50">
+                    <div className="w-full flex justify-between items-center px-4 max-w-md">
+                        <span className="text-lg font-bold text-blue-400">Lær nye ord</span>
+                        <span className="text-lg font-bold text-blue-400">{index + 1} / {blockWords.length}</span>
+                    </div>
+
+                    <div className="flex flex-col items-center space-y-12 w-full">
+                        <h2 className="text-8xl md:text-9xl font-black tracking-widest text-gray-800 text-center" key={currentWord.id}>
+                            {renderWordWithHighlight(currentWord)}
+                        </h2>
+                        
+                        <div className="bg-white p-8 rounded-3xl shadow-md w-full max-w-md text-center border-2 border-blue-100">
+                            <p className="text-3xl font-bold text-gray-700 leading-relaxed">
+                                {currentWord.contextSentence.split('___').map((part, i, arr) => (
+                                    <React.Fragment key={i}>
+                                        {part}
+                                        {i < arr.length - 1 && <span className="text-blue-600 border-b-4 border-blue-200">{currentWord.word}</span>}
+                                    </React.Fragment>
+                                ))}
+                            </p>
+                        </div>
+                    </div>
+
+                    <button 
+                        onClick={handleNext}
+                        className="card-3d bg-blue-500 text-white rounded-2xl w-full max-w-md py-6 text-3xl font-bold shadow-lg flex justify-center items-center space-x-2 border-b-4 border-blue-600"
+                    >
+                        <span>Neste</span>
+                        <ArrowRightIcon />
+                    </button>
+                </div>
+            );
+        };
+
+        const TrainingPhase = ({ blockWords, onFinish }) => {
+            const [wordsQueue, setWordsQueue] = useState([...blockWords].sort(() => Math.random() - 0.5));
+            const currentWord = wordsQueue[0];
+
+            const handleSuccess = () => {
+                const newQueue = wordsQueue.slice(1);
+                if (newQueue.length === 0) onFinish();
+                else setWordsQueue(newQueue);
+            };
+
+            const handleFail = () => {
+                const newQueue = [...wordsQueue.slice(1), currentWord];
+                setWordsQueue(newQueue);
+            };
+
+            if (!currentWord) return null;
+
+            return (
+                <div className="min-h-screen flex flex-col items-center justify-between py-12 px-6 fade-in bg-purple-50">
+                    <div className="w-full flex justify-between items-center px-4 max-w-md">
+                        <span className="text-lg font-bold text-purple-400">Trening</span>
+                        <span className="text-lg font-bold text-purple-400">{blockWords.length - wordsQueue.length + 1} gjenstår</span>
+                    </div>
+
+                    <div className="flex-1 flex items-center justify-center w-full">
+                        <div className="bg-white w-full max-w-md aspect-square rounded-[3rem] shadow-xl flex items-center justify-center border-4 border-purple-100 p-8" key={currentWord.id}>
+                            <h2 className="text-8xl md:text-9xl font-black text-gray-800 text-center break-words w-full">
+                                {currentWord.word}
+                            </h2>
+                        </div>
+                    </div>
+
+                    <div className="w-full max-w-md flex space-x-4">
+                        <button 
+                            onClick={handleFail}
+                            className="card-3d flex-1 bg-white text-gray-600 border-2 border-gray-200 rounded-2xl py-6 text-2xl font-bold shadow-sm"
+                        >
+                            Øve mer
+                        </button>
+                        <button 
+                            onClick={handleSuccess}
+                            className="card-3d flex-1 bg-green-500 text-white rounded-2xl py-6 text-2xl font-bold shadow-lg flex justify-center items-center space-x-2 border-b-4 border-green-600"
+                        >
+                            <CheckIcon />
+                            <span>Klarte det!</span>
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [currentPhase, setCurrentPhase] = useState('dashboard');
+            const [currentBlockIndex, setCurrentBlockIndex] = useState(1);
+            
+            const blockWords = wordDatabase.filter(w => w.block === currentBlockIndex);
+
+            const handleFinishLearning = () => setCurrentPhase('training');
+            const handleFinishTraining = () => {
+                if (currentBlockIndex <= 10) {
+                    setCurrentBlockIndex(currentBlockIndex + 1);
+                }
+                setCurrentPhase('dashboard');
+            };
+
+            return (
+                <div className="max-w-2xl mx-auto relative min-h-screen overflow-hidden bg-gray-50 shadow-2xl">
+                    {currentPhase === 'dashboard' && (
+                        <Dashboard currentBlock={currentBlockIndex} onStart={() => setCurrentPhase('learning')} />
+                    )}
+                    {currentPhase === 'learning' && (
+                        <LearningPhase blockWords={blockWords} onFinish={handleFinishLearning} />
+                    )}
+                    {currentPhase === 'training' && (
+                        <TrainingPhase blockWords={blockWords} onFinish={handleFinishTraining} />
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
